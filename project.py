@@ -20,7 +20,7 @@ Note: You can type "exit" to close the program anytime :)
             
 """
 
-main_prompt_b = """
+main_prompt_b = f"""
 
 Please choose an option (1-6):
 1: View Tasks
@@ -29,7 +29,8 @@ Please choose an option (1-6):
 4: Export Task to Excel/PDF
 5: Remove Task
 6: Create New File
-7: Exit
+7: Load New File
+8: Exit
 
 """
 
@@ -67,17 +68,19 @@ class Taskfile():
             self._filepath = filepath
 
     @classmethod
-    def create_new_file(cls, filepath: str) -> "Taskfile":
+    def create_file(cls, filepath: str) -> "Taskfile":
         task_file = cls(filepath)
-        with open(task_file.filepath, "x"):
-            pass
+        with open(task_file.filepath, "x", newline="") as file:
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
         return task_file
 
     @classmethod
-    def validate_file(cls, filepath: str) -> "Taskfile":
+    def load_file(cls, filepath: str) -> "Taskfile":
         with open(filepath, "r"):
             pass
         return cls(filepath)
+    
 
     def update_tasks(self, filepath: str) -> None:
         try:
@@ -111,46 +114,23 @@ class Taskfile():
 
 
 def main() -> None:
-    task_list_exists = False
-
     while True:
         match get_user_answer_on_file():
             case "Y":
-                filepath = input(Fore.WHITE + "\n\nPlease enter the file name (with .csv extension): ").strip()
-                if filepath == "exit":
-                    exit()
-                elif task_file := check_file_access(filepath):
-                    task_file.update_tasks(task_file.filepath)
-                    task_list_exists = True
-                    print(Fore.GREEN + "\nFile accessed successfully! Proceeding to Main Menu...")
-                    time.sleep(delay)
-                    break
-                else:
-                    time.sleep(delay)
-                    continue
+                task_file = load_new_file()
+                break
             case "N":
-                while True:
-                    filepath = input(Fore.WHITE + "\n\nEnter the new file name (csv): ").strip()
-                    if filepath.lower() == "exit":
-                        exit()
-                    elif task_file := filename_is_valid(filepath):
-                        task_list_exists = False
-                        print(Fore.GREEN + "\nFile created successfully! Proceeding to Main Menu...")
-                        time.sleep(delay)
-                        break
-                    else:
-                        time.sleep(delay)
-                        continue
+                task_file = create_new_file()
                 break
             case "EXIT":
                 exit()
 
     while True:
-        match get_user_choice():
+        match get_user_choice(task_file.filepath):
             case 1:
                 view_task()
             case 2:
-                if add_task(task_file.filepath, task_list_exists):
+                if add_task(task_file.filepath):
                     print(
                         Fore.GREEN
                         + "\nTask added successfully! Returning to Main Menu..."
@@ -166,6 +146,8 @@ def main() -> None:
             case 6:
                 create_new_file()
             case 7:
+                task_file = load_new_file()
+            case 8:
                 exit()
 
         time.sleep(delay)
@@ -198,7 +180,7 @@ def answer_is_valid(answer: str):
 
 def check_file_access(filepath: str) -> Union["Taskfile", bool]:
     try:
-        return Taskfile.validate_file(filepath)
+        return Taskfile.load_file(filepath)
     except FileNotFoundError:
         print(Fore.RED + "\nFile not found. Please ensure the file exists.")
         return False
@@ -222,7 +204,7 @@ def filename_is_valid(source: str) -> Union["Taskfile", bool]:
         return False
 
     try:
-        return Taskfile.create_new_file(source)
+        return Taskfile.create_file(source)
     except ValueError:
         print(Fore.RED + "\nInvalid file name or extension. Please avoid special characters.")
         return False 
@@ -231,7 +213,7 @@ def filename_is_valid(source: str) -> Union["Taskfile", bool]:
         return False
 
 
-def get_user_choice() -> int:
+def get_user_choice(source: str) -> int:
     """Gets the user's choice from the main menu.
 
     Loops until a valid choice (1-7) is entered.
@@ -240,7 +222,10 @@ def get_user_choice() -> int:
         int: The user's menu choice, an integer between 1 and 6.
     """
     while True:
-        choice = input(Fore.WHITE + main_prompt_b).strip()
+        choice = input(
+            Fore.WHITE + f"\n\nLoaded File: {source}" +
+            Fore.WHITE + main_prompt_b
+        ).strip()
         if choice.lower() == "exit":
             exit()
 
@@ -263,21 +248,14 @@ def choice_is_valid(choice: str) -> str:
     Raises:
         ValueError: If the choice is not between 1 and 6.
     """
-    if not re.search(r"^[1-7]$", choice):
+    if not re.search(r"^[1-8]$", choice):
         raise ValueError
 
     return choice
 
 
 # Function to add tasks
-def add_task(source: str, is_existing: bool) -> bool:
-    if is_existing:
-        return write_task_existing_file(source)
-    else:
-        return write_task_new_file(source)
-
-
-def write_task_existing_file(source: str) -> bool:
+def add_task(source: str) -> bool:
     task_to_add = input(Fore.WHITE + "\nWhat is the task you want to add? ").strip()
     if task_to_add.lower() == "exit":
         exit()
@@ -305,32 +283,6 @@ def write_task_existing_file(source: str) -> bool:
         print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
         return False
 
-
-def write_task_new_file(source: str) -> bool:
-    task_to_add = input(Fore.WHITE + "\nWhat is the task you want to add? ").strip()
-    if task_to_add.lower() == "exit":
-        exit()
-    task_due_date = get_due_date()
-    time_left = (date.__sub__(task_due_date, date.today())).days
-
-    try:
-        with open(source, "w", newline="") as file:
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerow(
-                {
-                    "id": 1,
-                    "task": task_to_add,
-                    "status": "Pending",
-                    "due_date": str(task_due_date),
-                    "time_left": str(time_left),
-                }
-            )
-        return True
-    except OSError:
-        print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
-        return False
-    
 
 def get_due_date() -> date:
     """Prompts the user to enter a due date and validates the input.
@@ -393,8 +345,34 @@ def remove_task(): ...
 def save_task(): ...
 
 
-def create_new_file(): ...
+def create_new_file():
+    while True:
+        filepath = input(Fore.WHITE + "\n\nEnter the new file name (csv): ").strip()
+        if filepath.lower() == "exit":
+            exit()
+        elif task_file := filename_is_valid(filepath):
+            print(Fore.GREEN + "\nFile created successfully! Proceeding to Main Menu...")
+            time.sleep(delay)
+            return task_file
+        else:
+            time.sleep(delay)
+            continue
 
+
+def load_new_file():
+    while True:
+        filepath = input(Fore.WHITE + "\n\nPlease enter the file name (with .csv extension): ").strip()
+        if filepath.lower() == "exit":
+            exit()
+        elif task_file := check_file_access(filepath):
+            task_file.update_tasks(task_file.filepath)
+            print(Fore.GREEN + "\nFile accessed successfully! Proceeding to Main Menu...")
+            time.sleep(delay)
+            return task_file
+        else:
+            time.sleep(delay)
+            continue
+    
 
 # Function to exit
 def exit() -> None:
