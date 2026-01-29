@@ -279,6 +279,8 @@ def add_task(source: str, is_existing: bool) -> bool:
 
 def write_task_existing_file(source: str) -> bool:
     task_to_add = input(Fore.WHITE + "\nWhat is the task you want to add? ").strip()
+    if task_to_add.lower() == "exit":
+        exit()
     task_due_date = get_due_date()
     time_left = (date.__sub__(task_due_date, date.today())).days
 
@@ -299,13 +301,15 @@ def write_task_existing_file(source: str) -> bool:
                 }
             )
         return True
-    except Exception:
+    except OSError:
         print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
         return False
 
 
 def write_task_new_file(source: str) -> bool:
     task_to_add = input(Fore.WHITE + "\nWhat is the task you want to add? ").strip()
+    if task_to_add.lower() == "exit":
+        exit()
     task_due_date = get_due_date()
     time_left = (date.__sub__(task_due_date, date.today())).days
 
@@ -323,7 +327,7 @@ def write_task_new_file(source: str) -> bool:
                 }
             )
         return True
-    except Exception:
+    except OSError:
         print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
         return False
     
@@ -340,6 +344,9 @@ def get_due_date() -> date:
         due_date_input = input(
             Fore.WHITE + "\nEnter the due date (YYYY-MM-DD): "
         ).strip()
+
+        if due_date_input.lower() == "exit":
+            exit()
 
         try:
             return date_is_valid(due_date_input)
