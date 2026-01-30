@@ -62,6 +62,9 @@ class Taskfile:
         invalid_chars = r'[<>:"/\\|?*]'
         name, ext = os.path.splitext(filename)
 
+        if name == "":
+            raise ValueError
+
         if re.match(r"^\..*$", name) or re.match(r"^.*\.$", name):
             raise ValueError
 
@@ -110,9 +113,9 @@ class Taskfile:
 
         Raises:
             FileNotFoundError: If the file does not exist.
-            IsADirectoryError: If the specified path is a directory.
             PermissionError: If there are insufficient permissions to access the file.
             OSError: If an unexpected error occurs during file access.
+            ValueError: If the file name or extension is invalid.
         """
         with open(filename, "r"):
             pass
@@ -162,12 +165,14 @@ def main() -> None:
     Handles user interaction for loading/creating task files and performing task operations.
     """
     while True:
-        match get_user_answer_on_file():
+        match get_user_answer():
             case "Y":
                 task_file = load_new_file()
+                time.sleep(delay)
                 break
             case "N":
                 task_file = create_new_file()
+                time.sleep(delay)
                 break
             case "EXIT":
                 exit()
@@ -191,7 +196,7 @@ def main() -> None:
             case 5:
                 remove_task()
             case 6:
-                create_new_file()
+                task_file = create_new_file()
             case 7:
                 task_file = load_new_file()
             case 8:
@@ -200,7 +205,7 @@ def main() -> None:
         time.sleep(delay)
 
 
-def get_user_answer_on_file() -> str:
+def get_user_answer() -> str:
     """Gets the user's yes/no answer on whether they have an existing task list file.
 
     Returns:
@@ -252,7 +257,6 @@ def load_new_file() -> "Taskfile":
             print(
                 Fore.GREEN + "\nFile accessed successfully! Proceeding to Main Menu..."
             )
-            time.sleep(delay)
             return task_file
         else:
             time.sleep(delay)
@@ -273,9 +277,6 @@ def check_file_access(filename: str) -> Union["Taskfile", bool]:
         return Taskfile.load_file(filename)
     except FileNotFoundError:
         print(Fore.RED + "\nFile not found. Please ensure the file exists.")
-        return False
-    except IsADirectoryError:
-        print(Fore.RED + "\nThe specified path is a directory, not a file.")
         return False
     except PermissionError:
         print(Fore.RED + "\nYou do not have permission to access this file")
@@ -304,7 +305,6 @@ def create_new_file() -> "Taskfile":
             print(
                 Fore.GREEN + "\nFile created successfully! Proceeding to Main Menu..."
             )
-            time.sleep(delay)
             return task_file
         else:
             time.sleep(delay)

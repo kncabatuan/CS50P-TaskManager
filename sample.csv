@@ -1,5 +1,4 @@
 id,task,status,due_date,time_left
-1,cleaning,Pending,2026-01-29,0
-2,cooking,Pending,2026-02-02,4
-3,studying,Overdue,2026-01-25,-4
-
+1,cleaning,Overdue,2026-01-29,-1
+2,cooking,Pending,2026-02-02,3
+3,studying,Overdue,2026-01-25,-5
