@@ -5,7 +5,6 @@ import os
 import pytest
 
 
-
 def test_taskfile_initialization():
     taskfile = project.Taskfile("sample.csv")
     assert taskfile.filename == "sample.csv"
@@ -103,7 +102,6 @@ def test_valid_date():
             project.date_is_valid(date)
 
     assert project.date_is_valid("2026-01-01") == datetime.date(2026, 1, 1)
-    assert project.date_is_valid("exit") == "exit"
 
 
 def test_valid_id_input():
@@ -114,7 +112,7 @@ def test_valid_id_input():
     for id in test_invalid_ids1:
         with pytest.raises(ValueError):
             project.id_is_valid(id, test_valid_ids)
-    
+
     for id in test_invalid_ids2:
         with pytest.raises(project.IdNotFoundError):
             project.id_is_valid(id, test_valid_ids)

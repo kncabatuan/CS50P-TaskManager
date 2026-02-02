@@ -150,7 +150,7 @@ class Taskfile:
                 task["time_left"] = updated_time_left[0]
                 updated_time_left.pop(0)
 
-                if task["time_left"] < 0 and task["status"] != "Done":
+                if int(task["time_left"]) < 0 and task["status"] != "Done":
                     task["status"] = "Overdue"
 
             with open(filename, "w", newline="") as file:
@@ -279,7 +279,7 @@ def load_new_file() -> "Taskfile":
             continue
 
 
-def check_file_access(filename: str) -> Union["Taskfile", bool]:
+def check_file_access(filename: str) -> Union["Taskfile", None]:
     """Validates the file name and attempts to load the file.
 
     Args:
@@ -287,22 +287,22 @@ def check_file_access(filename: str) -> Union["Taskfile", bool]:
 
     Returns:
         Taskfile: An instance of Taskfile if the file is loaded successfully.
-        bool: False if the file loading fails due to validation or other errors.
+        None: If an exception occurs
     """
     try:
         return Taskfile.load_file(filename)
     except FileNotFoundError:
         print(Fore.RED + "\nFile not found. Please ensure the file exists.")
-        return False
+        return None
     except PermissionError:
         print(Fore.RED + "\nYou do not have permission to access this file")
-        return False
+        return None
     except OSError:
         print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
-        return False
+        return None
     except ValueError:
         print(Fore.RED + "\nInvalid file name or extension.")
-        return False
+        return None
 
 
 def create_new_file() -> "Taskfile":
@@ -327,7 +327,7 @@ def create_new_file() -> "Taskfile":
             continue
 
 
-def filename_is_valid(filename: str) -> Union["Taskfile", bool]:
+def filename_is_valid(filename: str) -> Union["Taskfile", None]:
     """Validates the file name and attempts to create the file.
 
     Args:
@@ -335,7 +335,7 @@ def filename_is_valid(filename: str) -> Union["Taskfile", bool]:
 
     Returns:
         Taskfile: An instance of Taskfile if the file is created successfully.
-        bool: False if the file creation fails due to validation or other errors.
+        None: If an exception occurs
     """
     try:
         return Taskfile.create_file(filename)
@@ -344,16 +344,16 @@ def filename_is_valid(filename: str) -> Union["Taskfile", bool]:
             Fore.RED
             + "\nInvalid file name or extension. Please avoid special characters."
         )
-        return False
+        return None
     except FileExistsError:
         print(Fore.RED + "\nFile already exists. Please choose a different name.")
-        return False
+        return None
     except PermissionError:
         print(Fore.RED + "\nYou do not have permission to create this file.")
-        return False
+        return None
     except OSError:
         print(Fore.RED + "\nAn unexpected error occurred while creating the file.")
-        return False
+        return None
 
 
 def get_user_choice(filename: str) -> int:
@@ -461,11 +461,7 @@ def get_due_date() -> date:
             input(Fore.WHITE + "\nEnter the due date (YYYY-MM-DD): ").strip().lower()
         )
         try:
-            due_date = date_is_valid(due_date_input)
-            if due_date == "exit":
-                exit()
-            else:
-                return due_date
+            return date_is_valid(due_date_input)
         except (TypeError, ValueError):
             print(
                 Fore.RED + "\nInvalid date. Please enter the date in YYYY-MM-DD format."
@@ -473,7 +469,7 @@ def get_due_date() -> date:
             continue
 
 
-def date_is_valid(date_input: str) -> Union[date, str]:
+def date_is_valid(date_input: str) -> date:
     """Validates the input string and returns a date object.
 
     Converts string in "YYYY-MM-DD" format into a date object.
@@ -487,11 +483,12 @@ def date_is_valid(date_input: str) -> Union[date, str]:
         str: "exit" if the user wants to exit.
 
     Raises:
+        SystemExit: If the user input is "exit"
         TypeError: If the date components cannot be converted to integers.
         ValueError: If the date is not valid.
     """
     if date_input == "exit":
-        return "exit"
+        raise SystemExit
     else:
         due_date = map(int, date_input.split("-"))
         return date(*due_date)
@@ -507,7 +504,7 @@ def view_task(filename: str) -> None:
         filename (str): The name of the task list file to view.
     """
     table = ColorTable(theme=Themes.OCEAN)
-    table.field_names = map(str.upper, fieldnames)
+    table.field_names = [s.upper for s in fieldnames]
 
     try:
         with open(filename, "r") as file:
@@ -590,7 +587,7 @@ def mark_task_as_done(filename: str) -> bool:
                     if task["id"] in done_ids:
                         task["status"] = "Done"
             break
-        except ValueError:
+        except (ValueError, TypeError):
             print(
                 Fore.RED
                 + "\nInvalid input. Please enter valid task ID/s (comma-separated)."
@@ -631,12 +628,14 @@ def id_is_valid(id_input: str, valid_ids: range) -> Union[list, str]:
         ValueError: If the input contains special characters.
         IdNotFoundError: If any of the provided IDs are not found in valid_ids.
     """
-    if re.search(r"[!@#$%^&*()_+=\[\]{};:\"\\|<>/?~`]", id_input):
+    if re.search(r"[\.!@#$%^&*()_+=\[\]{};:\"\\|<>/?~`]", id_input):
         raise ValueError
 
     id_list = map(str.strip, id_input.split(","))
     done_ids = []
     for id in id_list:
+        if not isinstance(int(id), int):
+            raise ValueError
         if not int(id) in valid_ids:
             raise IdNotFoundError
         done_ids.append(id)
