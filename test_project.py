@@ -11,20 +11,11 @@ def test_taskfile_initialization():
     taskfile = project.Taskfile("sample")
     assert taskfile.filename == "sample.csv"
 
-    with pytest.raises(ValueError):
-        project.Taskfile("")
+    test_invalid_names = ["", "sample.txt", ".sample.csv", "sample..csv", "sam/ple.csv"]
 
-    with pytest.raises(ValueError):
-        project.Taskfile("sample.txt")
-    
-    with pytest.raises(ValueError):
-        project.Taskfile(".sample.csv")
-                 
-    with pytest.raises(ValueError):
-        project.Taskfile("sample..csv")
-
-    with pytest.raises(ValueError):
-        project.Taskfile("sam/ple.csv")
+    for name in test_invalid_names:
+        with pytest.raises(ValueError):
+            project.Taskfile(name)
 
 
 def test_file_creation(tmp_path):
@@ -53,21 +44,29 @@ def test_file_loading(tmp_path):
 
 
 def test_valid_answer():
-    with pytest.raises(ValueError):
-        project.answer_is_valid("123")
-    
-    with pytest.raises(ValueError):
-        project.answer_is_valid("test")
-    
-    with pytest.raises(ValueError):
-        project.answer_is_valid("a1")
-    
-    with pytest.raises(ValueError):
-        project.answer_is_valid("!!!")
 
-    with pytest.raises(ValueError):
-        project.answer_is_valid("")
+    test_invalid_values = ["123", "test", "a1", "!!!", ""]
+    test_valid_values = ["Y", "N", "EXIT"]
+
+    for value in test_invalid_values:
+        with pytest.raises(ValueError):
+            project.answer_is_valid(value)
     
-    assert project.answer_is_valid("Y") == "Y"
-    assert project.answer_is_valid("N") == "N"
-    assert project.answer_is_valid("EXIT") == "EXIT"
+    for value in test_valid_values:
+        assert project.answer_is_valid(value) == value
+
+
+def test_valid_choice():
+
+    test_invalid_values = ["0", "9", "-1", "a", "1.5", "---", ""]
+    test_valid_values = [str(range(1-8)), "exit"]
+
+    for value in test_invalid_values:
+        with pytest.raises(ValueError):
+            project.choice_is_valid(value)
+    
+    for value in test_valid_values:
+        assert project.choice_is_valid(value) == value
+
+
+
