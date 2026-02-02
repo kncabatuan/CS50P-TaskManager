@@ -104,3 +104,17 @@ def test_valid_date():
 
     assert project.date_is_valid("2026-01-01") == datetime.date(2026, 1, 1)
     assert project.date_is_valid("exit") == "exit"
+
+
+def test_valid_id_input():
+    test_invalid_ids1 = [".", "?", "!!!", "1.5"]
+    test_invalid_ids2 = ["0", "9", "500", "-2"]
+    test_valid_ids = [1, 2, 3, 4]
+
+    for id in test_invalid_ids1:
+        with pytest.raises(ValueError):
+            project.id_is_valid(id, test_valid_ids)
+    
+    for id in test_invalid_ids2:
+        with pytest.raises(project.IdNotFoundError):
+            project.id_is_valid(id, test_valid_ids)
