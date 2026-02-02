@@ -1,13 +1,15 @@
+import datetime
 import project
 import csv
 import os
 import pytest
 
 
+
 def test_taskfile_initialization():
     taskfile = project.Taskfile("sample.csv")
     assert taskfile.filename == "sample.csv"
-    
+
     taskfile = project.Taskfile("sample")
     assert taskfile.filename == "sample.csv"
 
@@ -51,7 +53,7 @@ def test_valid_answer():
     for value in test_invalid_values:
         with pytest.raises(ValueError):
             project.answer_is_valid(value)
-    
+
     for value in test_valid_values:
         assert project.answer_is_valid(value) == value
 
@@ -66,9 +68,39 @@ def test_valid_choice():
     for value in test_invalid_values:
         with pytest.raises(ValueError):
             project.choice_is_valid(value)
-    
+
     for value in test_valid_values:
         assert project.choice_is_valid(value) == value
 
 
+def test_valid_date():
 
+    test_invalid_dates1 = [
+        "2026-13-01",
+        "2026-00-10",
+        "2026-01-00",
+        "2026-02-30",
+        "2026-01-32",
+        "2026-04-31",
+        "2026-02-29",
+        "2026/01/01",
+        "2026.01.01",
+        "01-01-2026",
+        "",
+        "abcd-ef-gh",
+        "test",
+        "2026 01 01",
+    ]
+
+    test_invalid_dates2 = ["20260101", "2026", "2026-01", "2026-01-01-01"]
+
+    for date in test_invalid_dates1:
+        with pytest.raises(ValueError):
+            project.date_is_valid(date)
+
+    for date in test_invalid_dates2:
+        with pytest.raises(TypeError):
+            project.date_is_valid(date)
+
+    assert project.date_is_valid("2026-01-01") == datetime.date(2026, 1, 1)
+    assert project.date_is_valid("exit") == "exit"
