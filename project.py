@@ -163,7 +163,12 @@ class Taskfile:
             print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
 
 
+# Error used for id input validation in mark_task_as_done and remove_task
 class IdNotFoundError(Exception):
+    pass
+
+
+class YesNoError(Exception):
     pass
 
 
@@ -198,7 +203,8 @@ def main() -> None:
                 else:
                     print(Fore.RED + "\nFailed to add task. Returning to Main Menu...")
             case 3:
-                if mark_task_as_done(task_file.filename):
+                mode = "mark_task_as_done"
+                if modify_tasks(task_file.filename, mode):
                     print(
                         Fore.GREEN
                         + "\nTasks updated successfully! Returning to Main Menu..."
@@ -210,7 +216,16 @@ def main() -> None:
             case 4:
                 export_task()
             case 5:
-                remove_task()
+                mode = "remove_task"
+                if modify_tasks(task_file.filename, mode):
+                    print(
+                        Fore.GREEN
+                        + "\nTask removed successfully! Returning to Main Menu..."
+                    )
+                else:
+                    print(
+                        Fore.RED + "\nFailed to Remove Task. Returning to Main Menu..."
+                    )
             case 6:
                 task_file = create_new_file()
             case 7:
@@ -231,7 +246,7 @@ def get_user_answer() -> str:
         answer = input(Fore.WHITE + main_prompt_a).strip().upper()
         try:
             return answer_is_valid(answer)
-        except ValueError:
+        except YesNoError:
             print(Fore.RED + "\nInvalid input. Please enter Y, N, or exit.")
             time.sleep(delay)
             continue
@@ -250,7 +265,7 @@ def answer_is_valid(answer: str) -> str:
         ValueError: If the answer is not 'Y', 'N', or 'EXIT'.
     """
     if not re.search(r"^([YN]|EXIT)$", answer):
-        raise ValueError
+        raise YesNoError
     return answer
 
 
@@ -405,7 +420,6 @@ def choice_is_valid(choice: str) -> str:
     return choice.lower()
 
 
-# Function to add tasks
 def add_task(filename: str) -> bool:
     """Prompts the user for the new task to add and due date.
 
@@ -494,7 +508,6 @@ def date_is_valid(date_input: str) -> date:
         return date(*due_date)
 
 
-# Function to view tasks
 def view_task(filename: str) -> None:
     """Displays the tasks from the specified CSV file in a formatted table.
 
@@ -504,7 +517,7 @@ def view_task(filename: str) -> None:
         filename (str): The name of the task list file to view.
     """
     table = ColorTable(theme=Themes.OCEAN)
-    table.field_names = [s.upper for s in fieldnames]
+    table.field_names = [s.upper() for s in fieldnames]
 
     try:
         with open(filename, "r") as file:
@@ -546,8 +559,7 @@ def view_task(filename: str) -> None:
         print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
 
 
-# Function to Mark task as done
-def mark_task_as_done(filename: str) -> bool:
+def modify_tasks(filename: str, mode: str) -> bool:
     """Prompts the user to enter the ID(s) of completed tasks and updates their status.
 
     Loops until valid task ID(s) are provided. Overwrites the task list file with updated information.
@@ -570,22 +582,41 @@ def mark_task_as_done(filename: str) -> bool:
     while True:
         try:
             valid_ids = range(1, len(task_list) + 1)
-            id_input = (
-                input(
+
+            if mode == "mark_task_as_done":
+                prompt = (
                     Fore.WHITE
-                    + "\nEnter the ID of completed task/s (comma-separated): "
+                    + "\nEnter the ID/s of completed task/s (comma-separated): "
                 )
-                .strip()
-                .lower()
-            )
+            elif mode == "remove_task":
+                prompt = (
+                    Fore.WHITE
+                    + "\nEnter the ID/s of task/s to be removed (comma-separated): "
+                )
+
+            id_input = input(prompt).strip().lower()
+
             if id_input == "exit":
                 exit()
             else:
-                done_ids = id_is_valid(id_input, valid_ids)
+                ids = id_is_valid(id_input, valid_ids)
 
+            if mode == "mark_task_as_done":
                 for task in task_list:
-                    if task["id"] in done_ids:
+                    if task["id"] in ids:
                         task["status"] = "Done"
+            elif mode == "remove_task":
+                answer = answer_is_valid(
+                    input(f"Are you sure you want to remove tasks {ids}? Y/N\n")
+                )
+                if answer_is_valid(answer) == "Y":
+                    for task in task_list:
+                        if task["id"] in ids:
+                            task_list.remove(task)
+                elif answer_is_valid(answer) == "N":
+                    return False
+                else:
+                    exit()
             break
         except (ValueError, TypeError):
             print(
@@ -598,6 +629,9 @@ def mark_task_as_done(filename: str) -> bool:
                 Fore.RED
                 + "\nOne or more task IDs not found. Please enter valid task ID/s."
             )
+            continue
+        except YesNoError:
+            print(Fore.RED + "\nInvalid input. Please enter Y, N, or exit.")
             continue
 
     try:
@@ -614,11 +648,11 @@ def mark_task_as_done(filename: str) -> bool:
 
 def id_is_valid(id_input: str, valid_ids: range) -> Union[list, str]:
     """Validates the input string of task IDs.
-    
-    Args: 
+
+    Args:
         id_input (str): The user's input string of task IDs.
         valid_ids (range): A range object representing valid task IDs.
-        
+
     Returns:
         list: A list of validated task IDs
         or
@@ -632,18 +666,14 @@ def id_is_valid(id_input: str, valid_ids: range) -> Union[list, str]:
         raise ValueError
 
     id_list = map(str.strip, id_input.split(","))
-    done_ids = []
+    validated_ids = []
     for id in id_list:
         if not isinstance(int(id), int):
             raise ValueError
         if not int(id) in valid_ids:
             raise IdNotFoundError
-        done_ids.append(id)
-    return done_ids
-
-
-# Function to Remove tasks
-def remove_task(): ...
+        validated_ids.append(id)
+    return validated_ids
 
 
 # Function to save tasks

@@ -50,7 +50,7 @@ def test_valid_answer():
     test_valid_values = ["Y", "N", "EXIT"]
 
     for value in test_invalid_values:
-        with pytest.raises(ValueError):
+        with pytest.raises(project.YesNoError):
             project.answer_is_valid(value)
 
     for value in test_valid_values:
