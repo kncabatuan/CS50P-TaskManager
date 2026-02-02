@@ -1,5 +1,7 @@
 from colorama import Fore
 from datetime import date
+from prettytable import PrettyTable
+from prettytable.colortable import ColorTable, Themes
 from typing import Union
 import csv
 import os
@@ -46,7 +48,7 @@ class Taskfile:
         self.filename = filename
 
     def __repr__(self) -> str:
-        return f"Taskfile(filename='{self._filename}')"
+        return f"Taskfile(filename = {self._filename})"
     
     @property
     def filename(self) -> str:
@@ -183,7 +185,7 @@ def main() -> None:
     while True:
         match get_user_choice(task_file.filename):
             case 1:
-                view_task()
+                view_task(task_file.filename)
             case 2:
                 if add_task(task_file.filename):
                     print(
@@ -357,7 +359,7 @@ def get_user_choice(filename: str) -> int:
     """
     while True:
         choice = input(
-            Fore.WHITE + f"\n\nLoaded File: {filename}" + Fore.WHITE + main_prompt_b
+            Fore.BLUE + f"\n\nLoaded File: {filename}" + Fore.WHITE + main_prompt_b
         ).strip()
 
         try:
@@ -371,6 +373,7 @@ def get_user_choice(filename: str) -> int:
                 Fore.RED
                 + '\nInvalid input. Please enter a number between 1 and 8, or "exit".'
             )
+            time.sleep(delay)
             continue
 
 
@@ -446,7 +449,6 @@ def get_due_date() -> date:
         due_date_input = (
             input(Fore.WHITE + "\nEnter the due date (YYYY-MM-DD): ").strip().lower()
         )
-
         try:
             due_date = date_is_valid(due_date_input)
             if due_date == "exit":
@@ -485,7 +487,45 @@ def date_is_valid(date_input: str) -> Union[date, str]:
 
 
 # Function to view tasks
-def view_task(): ...
+def view_task(filename: str) -> None:
+    table = ColorTable(theme=Themes.OCEAN)
+    table.field_names = map(str.upper, fieldnames)
+
+    with open(filename, "r") as file:
+        reader = csv.DictReader(file)
+        for task in reader:
+            if task["status"] == "Done":
+                table.add_row(
+                    [
+                        Fore.GREEN + task["id"],
+                        Fore.GREEN + task["task"].capitalize(),
+                        Fore.GREEN + task["status"].capitalize(),
+                        Fore.GREEN + task["due_date"],
+                        Fore.GREEN + task["time_left"],
+                    ]
+                )
+            elif task["status"] == "Overdue":
+                table.add_row(
+                    [
+                        Fore.RED + task["id"],
+                        Fore.RED + task["task"].capitalize(),
+                        Fore.RED + task["status"].capitalize(),
+                        Fore.RED + task["due_date"],
+                        Fore.RED + task["time_left"],
+                    ]
+                )
+            else:
+                table.add_row(
+                    [
+                        Fore.WHITE + task["id"],
+                        Fore.WHITE + task["task"].capitalize(),
+                        Fore.WHITE + task["status"].capitalize(),
+                        Fore.WHITE + task["due_date"],
+                        Fore.WHITE + task["time_left"],
+                    ]
+                )
+
+    print(table)
 
 
 # Function to Mark task as done
