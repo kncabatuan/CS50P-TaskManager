@@ -45,6 +45,9 @@ class Taskfile:
     def __init__(self, filename: str) -> None:
         self.filename = filename
 
+    def __repr__(self) -> str:
+        return f"Taskfile(filename='{self._filename}')"
+    
     @property
     def filename(self) -> str:
         return self._filename
@@ -346,7 +349,7 @@ def get_user_choice(filename: str) -> int:
     Loops until a valid choice (1-8) is entered.
     Closes program if user types "exit".
 
-    Args: 
+    Args:
         filename (str): The name of the currently loaded task list file.
 
     Returns:
@@ -364,7 +367,10 @@ def get_user_choice(filename: str) -> int:
             else:
                 return int(choice)
         except ValueError:
-            print(Fore.RED + "\nInvalid input. Please enter a number between 1 and 8, or \"exit\".")
+            print(
+                Fore.RED
+                + '\nInvalid input. Please enter a number between 1 and 8, or "exit".'
+            )
             continue
 
 
@@ -388,14 +394,14 @@ def choice_is_valid(choice: str) -> str:
 # Function to add tasks
 def add_task(filename: str) -> bool:
     """Prompts the user for the new task to add and due date.
-    
+
     Calculates the time left for the task
     Appends new data to the specified CSV file.
     Closes the program if the user types "exit" at any prompt.
-    
+
     Args:
         filename (str): The name of the task list file to which the task will be added.
-        
+
     Returns:
         bool: True if the task is added successfully, False otherwise.
     """
@@ -437,9 +443,9 @@ def get_due_date() -> date:
         date: The validated due date as a date object.
     """
     while True:
-        due_date_input = input(
-            Fore.WHITE + "\nEnter the due date (YYYY-MM-DD): "
-        ).strip().lower()
+        due_date_input = (
+            input(Fore.WHITE + "\nEnter the due date (YYYY-MM-DD): ").strip().lower()
+        )
 
         try:
             due_date = date_is_valid(due_date_input)
