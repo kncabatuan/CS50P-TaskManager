@@ -50,3 +50,24 @@ def test_file_loading(tmp_path):
     temp_folder.mkdir()
     with pytest.raises(PermissionError):
         project.Taskfile.load_file(temp_folder)
+
+
+def test_valid_answer():
+    with pytest.raises(ValueError):
+        project.answer_is_valid("123")
+    
+    with pytest.raises(ValueError):
+        project.answer_is_valid("test")
+    
+    with pytest.raises(ValueError):
+        project.answer_is_valid("a1")
+    
+    with pytest.raises(ValueError):
+        project.answer_is_valid("!!!")
+
+    with pytest.raises(ValueError):
+        project.answer_is_valid("")
+    
+    assert project.answer_is_valid("Y") == "Y"
+    assert project.answer_is_valid("N") == "N"
+    assert project.answer_is_valid("EXIT") == "EXIT"
