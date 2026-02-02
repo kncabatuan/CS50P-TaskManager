@@ -1,6 +1,5 @@
 from colorama import Fore
 from datetime import date
-from prettytable import PrettyTable
 from prettytable.colortable import ColorTable, Themes
 from typing import Union
 import csv
@@ -163,6 +162,8 @@ class Taskfile:
         except OSError:
             print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
 
+class IdNotFoundError(Exception):
+    pass
 
 def main() -> None:
     """Main function to run the Task Manager program.
@@ -195,9 +196,17 @@ def main() -> None:
                 else:
                     print(Fore.RED + "\nFailed to add task. Returning to Main Menu...")
             case 3:
-                mark_task_as_done()
+                if mark_task_as_done(task_file.filename):
+                    print(
+                        Fore.GREEN
+                        + "\nTasks updated successfully! Returning to Main Menu..."
+                    )
+                else:
+                    print(
+                        Fore.RED + "\nFailed to update tasks. Returning to Main Menu..."
+                    )
             case 4:
-                save_task()
+                export_task()
             case 5:
                 remove_task()
             case 6:
@@ -488,56 +497,119 @@ def date_is_valid(date_input: str) -> Union[date, str]:
 
 # Function to view tasks
 def view_task(filename: str) -> None:
+    """Displays the tasks from the specified CSV file in a formatted table.
+    
+    Displays tasks with color coding based on their status
+    
+    Args:
+        filename (str): The name of the task list file to view.
+    """
     table = ColorTable(theme=Themes.OCEAN)
     table.field_names = map(str.upper, fieldnames)
 
-    with open(filename, "r") as file:
-        reader = csv.DictReader(file)
-        for task in reader:
-            if task["status"] == "Done":
-                table.add_row(
-                    [
-                        Fore.GREEN + task["id"],
-                        Fore.GREEN + task["task"].capitalize(),
-                        Fore.GREEN + task["status"].capitalize(),
-                        Fore.GREEN + task["due_date"],
-                        Fore.GREEN + task["time_left"],
-                    ]
-                )
-            elif task["status"] == "Overdue":
-                table.add_row(
-                    [
-                        Fore.RED + task["id"],
-                        Fore.RED + task["task"].capitalize(),
-                        Fore.RED + task["status"].capitalize(),
-                        Fore.RED + task["due_date"],
-                        Fore.RED + task["time_left"],
-                    ]
-                )
-            else:
-                table.add_row(
-                    [
-                        Fore.WHITE + task["id"],
-                        Fore.WHITE + task["task"].capitalize(),
-                        Fore.WHITE + task["status"].capitalize(),
-                        Fore.WHITE + task["due_date"],
-                        Fore.WHITE + task["time_left"],
-                    ]
-                )
+    try:
+        with open(filename, "r") as file:
+            reader = csv.DictReader(file)
+            for task in reader:
+                if task["status"] == "Done":
+                    table.add_row(
+                        [
+                            Fore.GREEN + task["id"],
+                            Fore.GREEN + task["task"].capitalize(),
+                            Fore.GREEN + task["status"].capitalize(),
+                            Fore.GREEN + task["due_date"],
+                            Fore.GREEN + task["time_left"],
+                        ]
+                    )
+                elif task["status"] == "Overdue":
+                    table.add_row(
+                        [
+                            Fore.RED + task["id"],
+                            Fore.RED + task["task"].capitalize(),
+                            Fore.RED + task["status"].capitalize(),
+                            Fore.RED + task["due_date"],
+                            Fore.RED + task["time_left"],
+                        ]
+                    )
+                else:
+                    table.add_row(
+                        [
+                            Fore.WHITE + task["id"],
+                            Fore.WHITE + task["task"].capitalize(),
+                            Fore.WHITE + task["status"].capitalize(),
+                            Fore.WHITE + task["due_date"],
+                            Fore.WHITE + task["time_left"],
+                        ]
+                    )
 
-    print(table)
+        print(table)
+    except OSError:
+        print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
 
 
 # Function to Mark task as done
-def mark_task_as_done(): ...
+def mark_task_as_done(filename: str) -> bool:
+    try:
+        with open(filename, "r") as file:
+            reader = csv.DictReader(file)
+            task_list = list(reader)
+    except OSError:
+            print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
+            time.sleep(delay)
+            return False
 
+    while True:
+        try:
+            valid_ids = range(1, len(task_list)+1)
+            id_input = input(Fore.WHITE + "\nEnter the ID of completed task/s (comma-separated): ").strip().lower()
+            if id_input == "exit":
+                exit()
+            else:
+                done_ids = id_is_valid(id_input, valid_ids)
+
+                for task in task_list:
+                    if task["id"] in done_ids:
+                        task["status"] = "Done"
+            break
+        except ValueError:
+            print(Fore.RED + "\nInvalid input. Please enter valid task ID/s (comma-separated).")
+            continue
+        except IdNotFoundError:
+            print(Fore.RED + "\nOne or more task IDs not found. Please enter valid task ID/s.")
+            continue
+
+    try:
+        with open(filename, "w", newline="") as file:
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer.writeheader()
+            for task in task_list:
+                writer.writerow(task)
+        return True
+    except OSError:
+        print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
+        return False
+    
+
+def id_is_valid(id_input: str, valid_ids: range) -> Union[list, str]:
+    
+    if re.search(r"[!@#$%^&*()_+=\[\]{};:\"\\|<>/?~`]", id_input):
+        raise ValueError
+    
+    id_list = map(str.strip, id_input.split(","))
+    done_ids = []
+    for id in id_list:
+        if not int(id) in valid_ids:
+            raise IdNotFoundError
+        done_ids.append(id)
+    return done_ids
+        
 
 # Function to Remove tasks
 def remove_task(): ...
 
 
 # Function to save tasks
-def save_task(): ...
+def export_task(): ...
 
 
 # Function to exit
