@@ -48,7 +48,7 @@ class Taskfile:
 
     def __repr__(self) -> str:
         return f"Taskfile(filename = {self._filename})"
-    
+
     @property
     def filename(self) -> str:
         return self._filename
@@ -162,8 +162,10 @@ class Taskfile:
         except OSError:
             print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
 
+
 class IdNotFoundError(Exception):
     pass
+
 
 def main() -> None:
     """Main function to run the Task Manager program.
@@ -498,9 +500,9 @@ def date_is_valid(date_input: str) -> Union[date, str]:
 # Function to view tasks
 def view_task(filename: str) -> None:
     """Displays the tasks from the specified CSV file in a formatted table.
-    
+
     Displays tasks with color coding based on their status
-    
+
     Args:
         filename (str): The name of the task list file to view.
     """
@@ -549,19 +551,36 @@ def view_task(filename: str) -> None:
 
 # Function to Mark task as done
 def mark_task_as_done(filename: str) -> bool:
+    """Prompts the user to enter the ID(s) of completed tasks and updates their status.
+
+    Loops until valid task ID(s) are provided. Overwrites the task list file with updated information.
+
+    Args:
+        filename (str): The name of the task list file to update.
+
+    Returns:
+        bool: True if tasks are updated successfully, False otherwise.
+    """
     try:
         with open(filename, "r") as file:
             reader = csv.DictReader(file)
             task_list = list(reader)
     except OSError:
-            print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
-            time.sleep(delay)
-            return False
+        print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
+        time.sleep(delay)
+        return False
 
     while True:
         try:
-            valid_ids = range(1, len(task_list)+1)
-            id_input = input(Fore.WHITE + "\nEnter the ID of completed task/s (comma-separated): ").strip().lower()
+            valid_ids = range(1, len(task_list) + 1)
+            id_input = (
+                input(
+                    Fore.WHITE
+                    + "\nEnter the ID of completed task/s (comma-separated): "
+                )
+                .strip()
+                .lower()
+            )
             if id_input == "exit":
                 exit()
             else:
@@ -572,10 +591,16 @@ def mark_task_as_done(filename: str) -> bool:
                         task["status"] = "Done"
             break
         except ValueError:
-            print(Fore.RED + "\nInvalid input. Please enter valid task ID/s (comma-separated).")
+            print(
+                Fore.RED
+                + "\nInvalid input. Please enter valid task ID/s (comma-separated)."
+            )
             continue
         except IdNotFoundError:
-            print(Fore.RED + "\nOne or more task IDs not found. Please enter valid task ID/s.")
+            print(
+                Fore.RED
+                + "\nOne or more task IDs not found. Please enter valid task ID/s."
+            )
             continue
 
     try:
@@ -588,13 +613,27 @@ def mark_task_as_done(filename: str) -> bool:
     except OSError:
         print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
         return False
-    
+
 
 def id_is_valid(id_input: str, valid_ids: range) -> Union[list, str]:
+    """Validates the input string of task IDs.
     
+    Args: 
+        id_input (str): The user's input string of task IDs.
+        valid_ids (range): A range object representing valid task IDs.
+        
+    Returns:
+        list: A list of validated task IDs
+        or
+        str: "exit" if the user wants to exit.
+
+    Raises:
+        ValueError: If the input contains special characters.
+        IdNotFoundError: If any of the provided IDs are not found in valid_ids.
+    """
     if re.search(r"[!@#$%^&*()_+=\[\]{};:\"\\|<>/?~`]", id_input):
         raise ValueError
-    
+
     id_list = map(str.strip, id_input.split(","))
     done_ids = []
     for id in id_list:
@@ -602,7 +641,7 @@ def id_is_valid(id_input: str, valid_ids: range) -> Union[list, str]:
             raise IdNotFoundError
         done_ids.append(id)
     return done_ids
-        
+
 
 # Function to Remove tasks
 def remove_task(): ...
