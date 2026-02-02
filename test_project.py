@@ -18,7 +18,7 @@ def test_taskfile_initialization():
             project.Taskfile(name)
 
 
-def test_file_creation(tmp_path):
+def test_file_creation():
     with pytest.raises(FileExistsError):
         project.Taskfile.create_file("sample.csv")
 
@@ -59,7 +59,9 @@ def test_valid_answer():
 def test_valid_choice():
 
     test_invalid_values = ["0", "9", "-1", "a", "1.5", "---", ""]
-    test_valid_values = [str(range(1-8)), "exit"]
+    test_valid_values = ["exit"]
+    for i in range(1, 9):
+        test_valid_values.append(str(i))
 
     for value in test_invalid_values:
         with pytest.raises(ValueError):
