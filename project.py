@@ -753,21 +753,28 @@ def validate_xlsx_name(filename: str) -> str:
         FileExistsError: If the file already exists
     """
     invalid_chars = r'[<>:"/\\|?*]'
+    name, ext = os.path.splitext(filename)
 
-    if filename == "":
+    if name == "":
         raise ValueError
 
-    if re.match(r"^\..*$", filename) or re.match(r"^.*\.$", filename):
+    if re.match(r"^\..*$", name) or re.match(r"^.*\.$", name):
         raise ValueError
 
-    if re.search(invalid_chars, filename):
+    if re.search(invalid_chars, name):
+        raise ValueError
+    
+    if ext != ".xlsx" and ext != "":
         raise ValueError
     
     if os.path.exists(f"{filename}.xlsx"):
         raise FileExistsError
     
-    return f"{filename}.xlsx"
-    
+    if ext == "":
+        return f"{filename}.xlsx"
+    else:
+        return filename
+
 
 def exit() -> None:
     """Terminates the program with a thank you message."""

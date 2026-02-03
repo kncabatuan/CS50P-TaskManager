@@ -1,3 +1,4 @@
+from pathlib import Path
 import datetime
 import project
 import csv
@@ -116,3 +117,24 @@ def test_valid_id_input():
     for id in test_invalid_ids2:
         with pytest.raises(project.IdNotFoundError):
             project.id_is_valid(id, test_valid_ids)
+
+
+def test_valid_xlsx_name():
+    test_invalid_names = [".sample", "sample.", "sample.csv", "sam/ple", ""]
+    for name in test_invalid_names:
+        with pytest.raises(ValueError):
+            project.validate_xlsx_name(name)
+
+    try:
+        Path("sample.xlsx").touch()
+        with pytest.raises(FileExistsError):
+            project.validate_xlsx_name("sample")
+    finally:
+        if os.path.exists("sample.xlsx"):
+            os.remove("sample.xlsx")
+
+    
+
+    
+
+    
