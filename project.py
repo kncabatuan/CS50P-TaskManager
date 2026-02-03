@@ -126,16 +126,13 @@ class Taskfile:
             pass
         return cls(filename)
 
-    def update_tasks(self, filename: str) -> None:
+    def update_tasks(self) -> None:
         """Overwrites csv file with updated task information.
 
         Recalculates the time left for each task and updates the status of overdue tasks.
-
-        Args:
-            filename (str): The name of task list file to update.
         """
         try:
-            with open(filename, "r") as file:
+            with open(self.filename, "r") as file:
                 reader = csv.DictReader(file)
                 task_list = list(reader)
 
@@ -153,7 +150,7 @@ class Taskfile:
                 if int(task["time_left"]) < 0 and task["status"] != "Done":
                     task["status"] = "Overdue"
 
-            with open(filename, "w", newline="") as file:
+            with open(self.filename, "w", newline="") as file:
                 fieldnames = ["id", "task", "status", "due_date", "time_left"]
                 writer = csv.DictWriter(file, fieldnames=fieldnames)
                 writer.writeheader()
@@ -188,7 +185,7 @@ def main() -> None:
                 time.sleep(delay)
                 break
             case "EXIT":
-                exit()
+                quit_program()
 
     while True:
         match get_user_choice(task_file.filename):
@@ -240,7 +237,7 @@ def main() -> None:
             case 7:
                 task_file = load_new_file()
             case 8:
-                exit()
+                quit_program()
 
         time.sleep(delay)
 
@@ -291,7 +288,7 @@ def load_new_file() -> "Taskfile":
             Fore.WHITE + "\n\nPlease enter the file name (with .csv extension): "
         ).strip()
         if filename.lower() == "exit":
-            exit()
+            quit_program()
         elif task_file := check_file_access(filename):
             task_file.update_tasks(task_file.filename)
             print(
@@ -340,7 +337,7 @@ def create_new_file() -> "Taskfile":
     while True:
         filename = input(Fore.WHITE + "\n\nEnter the new file name (csv): ").strip()
         if filename.lower() == "exit":
-            exit()
+            quit_program()
         elif task_file := filename_is_valid(filename):
             print(
                 Fore.GREEN + "\nFile created successfully! Proceeding to Main Menu..."
@@ -400,7 +397,7 @@ def get_user_choice(filename: str) -> int:
         try:
             choice = choice_is_valid(choice)
             if choice == "exit":
-                exit()
+                quit_program()
             else:
                 return int(choice)
         except ValueError:
@@ -444,7 +441,7 @@ def add_task(filename: str) -> bool:
     """
     task_to_add = input(Fore.WHITE + "\nWhat is the task you want to add? ").strip()
     if task_to_add.lower() == "exit":
-        exit()
+        quit_program()
     task_due_date = get_due_date()
     time_left = (date.__sub__(task_due_date, date.today())).days
 
@@ -608,7 +605,7 @@ def modify_tasks(filename: str, mode: str) -> bool:
             id_input = input(prompt).strip().lower()
 
             if id_input == "exit":
-                exit()
+                quit_program()
             else:
                 ids = id_is_valid(id_input, valid_ids)
 
@@ -616,14 +613,14 @@ def modify_tasks(filename: str, mode: str) -> bool:
                 for task in task_list:
                     if task["id"] in ids:
                         if task["status"] == "Done":
-                            print(Fore.RED + f"\nTask {task["id"]} is already done")
+                            print(Fore.RED + f"\nTask {task['id']} is already done")
                         else:
                             task["status"] = "Done"
             elif mode == "remove_task":
                 print(Fore.RED + "\nAre you sure you want to remove these tasks? Y/N\n")
                 for task in task_list:
                     if task["id"] in ids:
-                        print(f"Task {task["id"]}: {task["task"]}")
+                        print(f"Task {task['id']}: {task['task']}")
 
                 answer = answer_is_valid((input(Fore.WHITE + "\n")).strip().upper())
                 if answer == "Y":
@@ -633,7 +630,7 @@ def modify_tasks(filename: str, mode: str) -> bool:
                 elif answer == "N":
                     return False
                 else:
-                    exit()
+                    quit_program()
             break
         except (ValueError, TypeError):
             print(
@@ -730,7 +727,7 @@ def get_xlsx_name() -> str:
                 Fore.WHITE + "\nPlease enter a name for your excel file (no extension):"
             ).strip()
             if excel_name.lower() == "exit":
-                exit()
+                quit_program()
             return validate_xlsx_name(excel_name)
         except ValueError:
             print(Fore.RED + "\nInvalid file name. Please avoid special characters")
@@ -777,7 +774,7 @@ def validate_xlsx_name(filename: str) -> str:
         return filename
 
 
-def exit() -> None:
+def quit_program() -> None:
     """Terminates the program with a thank you message."""
     sys.exit(Fore.GREEN + "\nThank you for using Task Manager!")
 
