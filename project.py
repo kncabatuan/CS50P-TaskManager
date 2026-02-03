@@ -4,6 +4,7 @@ from prettytable.colortable import ColorTable, Themes
 from typing import Union
 import csv
 import os
+import pandas as pd
 import re
 import sys
 import time
@@ -27,7 +28,7 @@ Please choose an option (1-8):
 1: View Tasks
 2: Add Task        
 3: Mark Task as Done
-4: Export Task to Excel/PDF
+4: Export Task to MS Excel
 5: Remove Task
 6: Create New File
 7: Load New File
@@ -214,7 +215,16 @@ def main() -> None:
                         Fore.RED + "\nFailed to update tasks. Returning to Main Menu..."
                     )
             case 4:
-                export_task()
+                if export_task(task_file.filename):
+                    print(
+                        Fore.GREEN
+                        + "\nCSV file successfully exported to MS Excel! Returning to Main Menu..."
+                    )
+                else:
+                    print(
+                        Fore.RED
+                        + "\nFailed to export CSV file to MS Excel. Returning to Main Menu..."
+                    )
             case 5:
                 mode = "remove_task"
                 if modify_tasks(task_file.filename, mode):
@@ -576,7 +586,6 @@ def modify_tasks(filename: str, mode: str) -> bool:
             task_list = list(reader)
     except OSError:
         print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
-        time.sleep(delay)
         return False
 
     while True:
@@ -613,7 +622,7 @@ def modify_tasks(filename: str, mode: str) -> bool:
                 for task in task_list:
                     if task["id"] in ids:
                         print(f"Task {task["id"]}: {task["task"]}")
-                
+
                 answer = answer_is_valid((input(Fore.WHITE + "\n")).strip().upper())
                 if answer == "Y":
                     for task in task_list:
@@ -682,11 +691,52 @@ def id_is_valid(id_input: str, valid_ids: range) -> Union[list, str]:
     return validated_ids
 
 
-# Function to save tasks
-def export_task(): ...
+def export_task(filename: str) -> bool:
+    try:
+        df = pd.read_csv(filename)
+        df.to_excel(get_xlsx_name(), sheet_name="Tasks", index=False)
+        return True
+    except OSError:
+        print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
+        return False
+    except PermissionError:
+        print(Fore.RED + "\nYou do not have permission to access this file")
+        return False
+    
 
+def get_xlsx_name() -> str:
+    while True:
+        try:
+            excel_name = input(Fore.WHITE + "\nPlease enter a name for your excel file (no extension):").strip()
+            if excel_name.lower() == "exit":
+                exit()
+            return validate_xlsx_name(excel_name)
+        except ValueError:
+            print(Fore.RED + "\nInvalid file name. Please avoid special characters")
+            continue
+        except FileExistsError:
+            print(Fore.RED + "\nFile already exists. Please choose a different name.")
+            continue
+    
 
-# Function to exit
+def validate_xlsx_name(filename: str) -> str:
+    invalid_chars = r'[<>:"/\\|?*]'
+
+    if filename == "":
+        raise ValueError
+
+    if re.match(r"^\..*$", filename) or re.match(r"^.*\.$", filename):
+        raise ValueError
+
+    if re.search(invalid_chars, filename):
+        raise ValueError
+    
+    if os.path.exists(f"{filename}.xlsx"):
+        raise FileExistsError
+    
+    return f"{filename}.xlsx"
+    
+
 def exit() -> None:
     """Terminates the program with a thank you message."""
     sys.exit(Fore.GREEN + "\nThank you for using Task Manager!")
