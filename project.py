@@ -695,6 +695,18 @@ def id_is_valid(id_input: str, valid_ids: range) -> Union[list, str]:
 
 
 def export_task(filename: str) -> bool:
+    """Creates an xlsx file and exports the contents of the CSV file into it
+    
+    Args:
+        filename (str): Name of the CSV file to be exported
+        
+    Returns:
+        bool: True if export is successful, False otherwise
+        
+    Raises:
+        OSError: If an unexpected error occurred while accessing the file.
+        PermissionError: If not enough permission to access the file
+    """
     try:
         df = pd.read_csv(filename)
         df.to_excel(get_xlsx_name(), sheet_name="Tasks", index=False)
@@ -708,6 +720,11 @@ def export_task(filename: str) -> bool:
     
 
 def get_xlsx_name() -> str:
+    """Prompts user to input a name for the new xlsx file
+    
+    Returns:
+        str: Name of the xlsx file
+    """
     while True:
         try:
             excel_name = input(Fore.WHITE + "\nPlease enter a name for your excel file (no extension):").strip()
@@ -723,6 +740,18 @@ def get_xlsx_name() -> str:
     
 
 def validate_xlsx_name(filename: str) -> str:
+    """Validates the user input for the xlsx file
+    
+    Args:
+        filename (str): User input for the name of the xlsx file
+        
+    Returns:
+        str: The validated name of the xlsx file with .xlsx extension
+        
+    Raises:
+        ValueError: If there are invalid characters in the name
+        FileExistsError: If the file already exists
+    """
     invalid_chars = r'[<>:"/\\|?*]'
 
     if filename == "":
