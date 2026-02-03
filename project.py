@@ -663,7 +663,7 @@ def modify_tasks(filename: str, mode: str) -> bool:
         return False
 
 
-def id_is_valid(id_input: str, valid_ids: range) -> Union[list, str]:
+def id_is_valid(id_input: str, valid_ids: range) -> list:
     """Validates the input string of task IDs.
 
     Args:
