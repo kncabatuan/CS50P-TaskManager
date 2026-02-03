@@ -570,12 +570,15 @@ def view_task(filename: str) -> None:
 
 
 def modify_tasks(filename: str, mode: str) -> bool:
-    """Prompts the user to enter the ID(s) of completed tasks and updates their status.
+    """Prompts the user to enter the ID(s) of tasks to modify.
 
-    Loops until valid task ID(s) are provided. Overwrites the task list file with updated information.
+    Loops until valid ids are entered by the user. Then, modifies and
+    overwrites the task file depending on what mode this function is called:
+    mark_task_as_done or remove_task
 
     Args:
         filename (str): The name of the task list file to update.
+        mode (str): Either mark_task_as_done or remove_task
 
     Returns:
         bool: True if tasks are updated successfully, False otherwise.
