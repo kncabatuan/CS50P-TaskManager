@@ -262,7 +262,7 @@ def answer_is_valid(answer: str) -> str:
         str: The validated answer.
 
     Raises:
-        ValueError: If the answer is not 'Y', 'N', or 'EXIT'.
+        YesNoError: If the answer is not 'Y', 'N', or 'EXIT'.
     """
     if not re.search(r"^([YN]|EXIT)$", answer):
         raise YesNoError
@@ -609,14 +609,17 @@ def modify_tasks(filename: str, mode: str) -> bool:
                         else:
                             task["status"] = "Done"
             elif mode == "remove_task":
-                answer = answer_is_valid(
-                    input(f"Are you sure you want to remove tasks {ids}? Y/N\n")
-                )
-                if answer_is_valid(answer) == "Y":
+                print(Fore.RED + "\nAre you sure you want to remove these tasks? Y/N\n")
+                for task in task_list:
+                    if task["id"] in ids:
+                        print(f"Task {task["id"]}: {task["task"]}")
+                
+                answer = answer_is_valid((input(Fore.WHITE + "\n")).strip().upper())
+                if answer == "Y":
                     for task in task_list:
                         if task["id"] in ids:
                             task_list.remove(task)
-                elif answer_is_valid(answer) == "N":
+                elif answer == "N":
                     return False
                 else:
                     exit()
