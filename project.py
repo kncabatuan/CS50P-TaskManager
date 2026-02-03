@@ -28,10 +28,10 @@ Please choose an option (1-8):
 1: View Tasks
 2: Add Task        
 3: Mark Task as Done
-4: Export Task to MS Excel
-5: Remove Task
-6: Create New File
-7: Load New File
+4: Remove Task 
+5: Export Task to MS Excel
+6: Create New CSV File
+7: Load New CSV File
 8: Exit
 
 """
@@ -146,10 +146,9 @@ class Taskfile:
                     (date.__sub__((date(*date_entry)), date.today())).days
                 )
 
-            for task in task_list:
+            for task, time_left in zip(task_list, updated_time_left):
                 task["id"] = task_list.index(task) + 1
-                task["time_left"] = updated_time_left[0]
-                updated_time_left.pop(0)
+                task["time_left"] = time_left
 
                 if int(task["time_left"]) < 0 and task["status"] != "Done":
                     task["status"] = "Overdue"
@@ -168,7 +167,7 @@ class Taskfile:
 class IdNotFoundError(Exception):
     pass
 
-
+# Error used for checking input for Yes/No questions
 class YesNoError(Exception):
     pass
 
@@ -215,17 +214,6 @@ def main() -> None:
                         Fore.RED + "\nFailed to update tasks. Returning to Main Menu..."
                     )
             case 4:
-                if export_task(task_file.filename):
-                    print(
-                        Fore.GREEN
-                        + "\nCSV file successfully exported to MS Excel! Returning to Main Menu..."
-                    )
-                else:
-                    print(
-                        Fore.RED
-                        + "\nFailed to export CSV file to MS Excel. Returning to Main Menu..."
-                    )
-            case 5:
                 mode = "remove_task"
                 if modify_tasks(task_file.filename, mode):
                     print(
@@ -235,6 +223,17 @@ def main() -> None:
                 else:
                     print(
                         Fore.RED + "\nFailed to Remove Task. Returning to Main Menu..."
+                    )
+            case 5:
+                if export_task(task_file.filename):
+                    print(
+                        Fore.GREEN
+                        + "\nCSV file successfully exported to MS Excel! Returning to Main Menu..."
+                    )
+                else:
+                    print(
+                        Fore.RED
+                        + "\nFailed to export CSV file to MS Excel. Returning to Main Menu..."
                     )
             case 6:
                 task_file = create_new_file()
@@ -628,9 +627,9 @@ def modify_tasks(filename: str, mode: str) -> bool:
 
                 answer = answer_is_valid((input(Fore.WHITE + "\n")).strip().upper())
                 if answer == "Y":
+                    task_list = [task for task in task_list if task["id"] not in ids]
                     for task in task_list:
-                        if task["id"] in ids:
-                            task_list.remove(task)
+                        task["id"] = task_list.index(task) + 1
                 elif answer == "N":
                     return False
                 else:
@@ -696,13 +695,13 @@ def id_is_valid(id_input: str, valid_ids: range) -> Union[list, str]:
 
 def export_task(filename: str) -> bool:
     """Creates an xlsx file and exports the contents of the CSV file into it
-    
+
     Args:
         filename (str): Name of the CSV file to be exported
-        
+
     Returns:
         bool: True if export is successful, False otherwise
-        
+
     Raises:
         OSError: If an unexpected error occurred while accessing the file.
         PermissionError: If not enough permission to access the file
@@ -717,17 +716,19 @@ def export_task(filename: str) -> bool:
     except PermissionError:
         print(Fore.RED + "\nYou do not have permission to access this file")
         return False
-    
+
 
 def get_xlsx_name() -> str:
     """Prompts user to input a name for the new xlsx file
-    
+
     Returns:
         str: Name of the xlsx file
     """
     while True:
         try:
-            excel_name = input(Fore.WHITE + "\nPlease enter a name for your excel file (no extension):").strip()
+            excel_name = input(
+                Fore.WHITE + "\nPlease enter a name for your excel file (no extension):"
+            ).strip()
             if excel_name.lower() == "exit":
                 exit()
             return validate_xlsx_name(excel_name)
@@ -737,17 +738,17 @@ def get_xlsx_name() -> str:
         except FileExistsError:
             print(Fore.RED + "\nFile already exists. Please choose a different name.")
             continue
-    
+
 
 def validate_xlsx_name(filename: str) -> str:
     """Validates the user input for the xlsx file
-    
+
     Args:
         filename (str): User input for the name of the xlsx file
-        
+
     Returns:
         str: The validated name of the xlsx file with .xlsx extension
-        
+
     Raises:
         ValueError: If there are invalid characters in the name
         FileExistsError: If the file already exists
@@ -763,13 +764,13 @@ def validate_xlsx_name(filename: str) -> str:
 
     if re.search(invalid_chars, name):
         raise ValueError
-    
+
     if ext != ".xlsx" and ext != "":
         raise ValueError
-    
+
     if os.path.exists(f"{filename}.xlsx"):
         raise FileExistsError
-    
+
     if ext == "":
         return f"{filename}.xlsx"
     else:
