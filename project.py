@@ -591,6 +591,10 @@ def modify_tasks(filename: str, mode: str) -> bool:
     except OSError:
         print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
         return False
+    
+    if len(task_list) == 0:
+        print(Fore.RED + "\nThe task list is empty")
+        return False
 
     while True:
         try:
