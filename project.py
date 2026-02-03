@@ -604,7 +604,10 @@ def modify_tasks(filename: str, mode: str) -> bool:
             if mode == "mark_task_as_done":
                 for task in task_list:
                     if task["id"] in ids:
-                        task["status"] = "Done"
+                        if task["status"] == "Done":
+                            print(Fore.RED + f"\nTask {task["id"]} is already done")
+                        else:
+                            task["status"] = "Done"
             elif mode == "remove_task":
                 answer = answer_is_valid(
                     input(f"Are you sure you want to remove tasks {ids}? Y/N\n")
