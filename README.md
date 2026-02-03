@@ -67,5 +67,9 @@ The user can also export the contents of their CSV file to MS Excel for more adv
 
 - This is program is limited to the creators' knowledge in python post CS50P, Introduction to Python Programming and a little bit of self study on other python libraries and OOP
 - Here are a few features for improvement of this program:
-    - Feature to sort through the task list
-    - Feature to
+    - Add feature to sort through the task list by time left, by due_date, or by status
+    - Change time left to include hours and minutes to be a bit more accurate
+    - Include functionality in add task to add urgency of task (moderately urgent, non-urgent, extremely urgent) and change the urgency of tasks
+    - Add feature to sort through the task list by urgency of task
+    - Add feature to include person responsible for task and to sort through task list by person
+    - Add feature in view task to view only by level of urgency or by status
