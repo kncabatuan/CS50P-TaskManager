@@ -457,11 +457,15 @@ def add_task(filename: str) -> bool:
 
         with open(filename, "a", newline="") as file:
             writer = csv.DictWriter(file, fieldnames=FIELDNAMES)
+            if time_left < 0:
+                status = "Overdue"
+            else:
+                status = "Pending"
             writer.writerow(
                 {
                     "id": len(task_list) + 1,
                     "task": task_to_add,
-                    "status": "Pending",
+                    "status": status,
                     "due_date": str(task_due_date),
                     "time_left": str(time_left),
                 }
