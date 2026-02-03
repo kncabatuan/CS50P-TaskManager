@@ -37,10 +37,21 @@ Please choose an option (1-8):
 """
 
 # CSV field names
-fieldnames = ["id", "task", "status", "due_date", "time_left"]
+FIELDNAMES = ["id", "task", "status", "due_date", "time_left"]
 
 # Delay time (in seconds) between operations
-delay = 1.5
+DELAY = 1.5
+
+# Invalid characters for filename validation
+INVALID_CHARS = r'[<>:"/\\|?*]'
+
+# Error used for id input validation in mark_task_as_done and remove_task
+class IdNotFoundError(Exception):
+    pass
+
+# Error used for checking input for Yes/No questions
+class YesNoError(Exception):
+    pass
 
 
 class Taskfile:
@@ -64,7 +75,6 @@ class Taskfile:
         Raises:
             ValueError: If the file name or extension is invalid.
         """
-        invalid_chars = r'[<>:"/\\|?*]'
         name, ext = os.path.splitext(filename)
 
         if name == "":
@@ -73,7 +83,7 @@ class Taskfile:
         if re.match(r"^\..*$", name) or re.match(r"^.*\.$", name):
             raise ValueError
 
-        if re.search(invalid_chars, name):
+        if re.search(INVALID_CHARS, name):
             raise ValueError
 
         if ext != ".csv" and ext != "":
@@ -102,7 +112,7 @@ class Taskfile:
         """
         task_file = cls(filename)
         with open(task_file.filename, "x", newline="") as file:
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer = csv.DictWriter(file, fieldnames=FIELDNAMES)
             writer.writeheader()
         return task_file
 
@@ -160,15 +170,6 @@ class Taskfile:
             print(Fore.RED + "\nAn unexpected error occurred while accessing the file.")
 
 
-# Error used for id input validation in mark_task_as_done and remove_task
-class IdNotFoundError(Exception):
-    pass
-
-# Error used for checking input for Yes/No questions
-class YesNoError(Exception):
-    pass
-
-
 def main() -> None:
     """Main function to run the Task Manager program.
 
@@ -178,11 +179,11 @@ def main() -> None:
         match get_user_answer():
             case "Y":
                 task_file = load_new_file()
-                time.sleep(delay)
+                time.sleep(DELAY)
                 break
             case "N":
                 task_file = create_new_file()
-                time.sleep(delay)
+                time.sleep(DELAY)
                 break
             case "EXIT":
                 quit_program()
@@ -239,7 +240,7 @@ def main() -> None:
             case 8:
                 quit_program()
 
-        time.sleep(delay)
+        time.sleep(DELAY)
 
 
 def get_user_answer() -> str:
@@ -254,7 +255,7 @@ def get_user_answer() -> str:
             return answer_is_valid(answer)
         except YesNoError:
             print(Fore.RED + "\nInvalid input. Please enter Y, N, or exit.")
-            time.sleep(delay)
+            time.sleep(DELAY)
             continue
 
 
@@ -290,13 +291,13 @@ def load_new_file() -> "Taskfile":
         if filename.lower() == "exit":
             quit_program()
         elif task_file := check_file_access(filename):
-            task_file.update_tasks(task_file.filename)
+            task_file.update_tasks()
             print(
                 Fore.GREEN + "\nFile accessed successfully! Proceeding to Main Menu..."
             )
             return task_file
         else:
-            time.sleep(delay)
+            time.sleep(DELAY)
             continue
 
 
@@ -344,7 +345,7 @@ def create_new_file() -> "Taskfile":
             )
             return task_file
         else:
-            time.sleep(delay)
+            time.sleep(DELAY)
             continue
 
 
@@ -405,7 +406,7 @@ def get_user_choice(filename: str) -> int:
                 Fore.RED
                 + '\nInvalid input. Please enter a number between 1 and 8, or "exit".'
             )
-            time.sleep(delay)
+            time.sleep(DELAY)
             continue
 
 
@@ -451,7 +452,7 @@ def add_task(filename: str) -> bool:
             task_list = list(reader)
 
         with open(filename, "a", newline="") as file:
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer = csv.DictWriter(file, fieldnames=FIELDNAMES)
             writer.writerow(
                 {
                     "id": len(task_list) + 1,
@@ -523,7 +524,7 @@ def view_task(filename: str) -> None:
         filename (str): The name of the task list file to view.
     """
     table = ColorTable(theme=Themes.OCEAN)
-    table.field_names = [s.upper() for s in fieldnames]
+    table.field_names = [s.upper() for s in FIELDNAMES]
 
     try:
         with open(filename, "r") as file:
@@ -650,7 +651,7 @@ def modify_tasks(filename: str, mode: str) -> bool:
 
     try:
         with open(filename, "w", newline="") as file:
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer = csv.DictWriter(file, fieldnames=FIELDNAMES)
             writer.writeheader()
             for task in task_list:
                 writer.writerow(task)
@@ -750,7 +751,6 @@ def validate_xlsx_name(filename: str) -> str:
         ValueError: If there are invalid characters in the name
         FileExistsError: If the file already exists
     """
-    invalid_chars = r'[<>:"/\\|?*]'
     name, ext = os.path.splitext(filename)
 
     if name == "":
@@ -759,7 +759,7 @@ def validate_xlsx_name(filename: str) -> str:
     if re.match(r"^\..*$", name) or re.match(r"^.*\.$", name):
         raise ValueError
 
-    if re.search(invalid_chars, name):
+    if re.search(INVALID_CHARS, name):
         raise ValueError
 
     if ext != ".xlsx" and ext != "":
