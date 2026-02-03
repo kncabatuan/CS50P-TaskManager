@@ -189,7 +189,8 @@ def main() -> None:
                 quit_program()
 
     while True:
-        match get_user_choice(task_file.filename):
+        choice = get_user_choice(task_file.filename)
+        match choice:
             case 1:
                 view_task(task_file.filename)
             case 2:
@@ -240,7 +241,10 @@ def main() -> None:
             case 8:
                 quit_program()
 
-        time.sleep(DELAY)
+        if choice == 1:
+            continue
+        else:
+            time.sleep(DELAY)
 
 
 def get_user_answer() -> str:
