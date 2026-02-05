@@ -1,5 +1,5 @@
 # PERSONAL TASK MANAGER 
-#### Video Demo: ...
+#### Video Demo: https://youtu.be/yPM6NJUAJOY
 #### Description:
 
 **Personal Task Manager** is a command-line interface (CLI) python program that was made to keep track of your everyday responsibilities in an easier and user-friendly way. 
