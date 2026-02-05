@@ -21,8 +21,11 @@ def test_taskfile_initialization():
 
 
 def test_file_creation():
+    Path("sample.csv").touch()
     with pytest.raises(FileExistsError):
         project.Taskfile.create_file("sample.csv")
+    if os.path.exists("sample.csv"):
+        os.remove("sample.csv")
 
     try:
         taskfile = project.Taskfile.create_file("test_file.csv")
